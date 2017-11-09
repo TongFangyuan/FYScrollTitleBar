@@ -15,17 +15,25 @@
 
 @protocol FYScrollTitleBarDelegate <NSObject>
 
+/**
+ *  当前选中的 button 的索引回调
+ */
 - (void)titleBar:(FYScrollTitleBar *)titleBar didSelectedIndex:(NSInteger)index;
 
 @end
 
 @interface FYScrollTitleBar : UIView
 
+/**
+ *  @param frame frame
+ *  @param titles 标题数组
+ *  @param delegate 代理
+ */
++ (instancetype)titleBarWithFrame:(CGRect)frame
+                           titles:(NSArray<NSString *> *)titles
+                         delegate:(id<FYScrollTitleBarDelegate>)delegate;
 + (instancetype)titleBarWithFrame:(CGRect)frame
                        titles:(NSArray<NSString *> *)titles;
-+ (instancetype)titleBarWithFrame:(CGRect)frame
-                       titles:(NSArray<NSString *> *)titles
-                     delegate:(id<FYScrollTitleBarDelegate>)delegate;
 
 /// 底部红色指示条
 @property (nonatomic, strong) UIImageView *indicator;
