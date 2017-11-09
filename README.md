@@ -5,7 +5,7 @@
 >.滚动的导航栏 titlebar 封装,类似于今日头条滚动标题效果
 
 ### 效果图
-![image](./README.md/demo.gif)<br /><br /><br />
+![image](./demo.gif)<br /><br /><br />
 
 
 使用
