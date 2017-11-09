@@ -43,6 +43,8 @@
 @property (nonatomic, assign, readonly) NSInteger selectedIndex;
 /// 代理
 @property (nonatomic, weak) id<FYScrollTitleBarDelegate> delegate;
+/// 自己更新 Indicator 位置, 默认为NO
+@property (nonatomic, assign) BOOL automicAdjustIndicator;
 
 /// 滚动条更新
 - (void)updatePercentX:(CGFloat)precentX;

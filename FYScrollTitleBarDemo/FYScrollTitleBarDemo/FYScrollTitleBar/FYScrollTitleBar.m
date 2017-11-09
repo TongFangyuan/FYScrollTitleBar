@@ -41,20 +41,24 @@
 - (void)updatePercentX:(CGFloat)precentX
 {
     // 根据 precentX 计算需要到达的 button
-    NSInteger targetIndex = ceilf(precentX);
+    NSInteger targetIndex = precentX>self.selectedIndex ? ceilf(precentX) : floor(precentX);
     UIButton *targetButton = [self viewWithTag:(targetIndex+kTitleBarTagStartValue)];
     
-    // 初始 button, 默认第一个
-    UIButton *startButton = [self viewWithTag:kTitleBarTagStartValue];
+    BOOL increase = precentX > self.selectedIndex;
+    CGFloat percent = fabs(precentX - self.selectedIndex);
     
+    UIButton *startButton = self.selectedButton;
+
     // indicator widht 变化
-    CGFloat indicatorPercentWidth = (targetButton.titleLabel.width - startButton.titleLabel.width) * precentX;
-    self.indicator.width = startButton.titleLabel.width + indicatorPercentWidth;
+    BOOL widthIncrease = targetButton.titleLabel.width > startButton.titleLabel.width;
+    CGFloat indicatorPercentWidth = fabs(targetButton.titleLabel.width - startButton.titleLabel.width) * percent;
+    self.indicator.width = widthIncrease ?startButton.titleLabel.width + indicatorPercentWidth : startButton.titleLabel.width - indicatorPercentWidth;
     
     // 计算 indicator centerX 百分比变化量
-    CGFloat indicatorPercentX = (targetButton.centerX - startButton.centerX) * precentX;
+    CGFloat indicatorPercentX = fabs(targetButton.centerX - startButton.centerX) * percent;
     CGFloat startIndicatorCenterX = startButton.centerX;
-    self.indicator.centerX = startIndicatorCenterX + indicatorPercentX;
+    self.indicator.centerX = increase ?startIndicatorCenterX + indicatorPercentX : startIndicatorCenterX - indicatorPercentX;
+    
 }
 
 /// 更新选中按钮
@@ -87,6 +91,7 @@
     if (self = [super initWithFrame:frame]) {
         _titles = [NSArray arrayWithArray:titles];
         _delegate = delegate;
+        _automicAdjustIndicator = NO;
         
         [self addSubview:self.contentView];
         [self.contentView addSubview:self.indicator];
@@ -131,15 +136,27 @@
     _selectedButton = selectedButton;
     _selectedButton.selected = YES;
     
-    // 没有实现 updatePercentX: 方法,自己更新滚动条位置
-    if (![_delegate respondsToSelector:@selector(updatePercentX:)]) {
+    // 是否自己更新滚动条位置
+    if (_automicAdjustIndicator) {
         [UIView animateWithDuration:0.3 animations:^{
             _indicator.width = selectedButton.titleLabel.width;
             _indicator.centerX = selectedButton.centerX;
         }];
     }
     
+    // button 显示在中间
+    CGPoint targetPoint = CGPointZero;
+    targetPoint.x = _selectedButton.center.x - self.contentView.width*0.5;
     
+    if (targetPoint.x > self.contentView.contentSize.width-self.contentView.width) {
+        targetPoint.x = self.contentView.contentSize.width-self.contentView.width;
+    }
+    
+    if (targetPoint.x < 0) {
+        targetPoint.x = 0;
+    }
+    
+    [self.contentView setContentOffset:targetPoint animated:YES];
 }
 
 - (UIScrollView *)contentView
@@ -230,7 +247,7 @@
         _contentView.contentSize = CGSizeMake(CGRectGetMaxX(lastButton.frame), self.height);
     }
     
-    NSLog(@"%@",_contentView);
+//    NSLog(@"%@",_contentView);
 }
 
 @end
