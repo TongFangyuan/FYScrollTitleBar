@@ -11,7 +11,6 @@
 
 @interface FYScrollTitleBar()
 
-
 @property (nonatomic, assign) NSInteger selectedIndex;
 
 @end;
@@ -30,7 +29,8 @@
     [self setSelectedButton:button];
     
     // 事件传递
-    if ([_delegate respondsToSelector:@selector(titleBar:didSelectedIndex:)] && _delegate) {
+    if ([_delegate respondsToSelector:@selector(titleBar:didSelectedIndex:)] && _delegate)
+    {
         ///通知代理
         [_delegate titleBar:self didSelectedIndex:button.tag-kTitleBarTagStartValue];
     }
@@ -49,10 +49,12 @@
     
     UIButton *startButton = self.selectedButton;
 
-    // indicator widht 变化
+    // indicator width 变化
+    if (self.autoResizeIndicator) {
     BOOL widthIncrease = targetButton.titleLabel.width > startButton.titleLabel.width;
     CGFloat indicatorPercentWidth = fabs(targetButton.titleLabel.width - startButton.titleLabel.width) * percent;
     self.indicator.width = widthIncrease ?startButton.titleLabel.width + indicatorPercentWidth : startButton.titleLabel.width - indicatorPercentWidth;
+    }
     
     // 计算 indicator centerX 百分比变化量
     CGFloat indicatorPercentX = fabs(targetButton.centerX - startButton.centerX) * percent;
@@ -92,20 +94,29 @@
         _titles = [NSArray arrayWithArray:titles];
         _delegate = delegate;
         _automicAdjustIndicator = NO;
+        _autoResizeIndicator = NO;
+        _indicatorSize = CGSizeMake(18.f, 1.f);
+        _indicatorColor = [UIColor colorWithRed:0.16 green:0.16 blue:0.16 alpha:1.00];
+        _normalStateColor = [UIColor colorWithRed:0.57 green:0.57 blue:0.57 alpha:1.00];
+        _normalStateFont = [UIFont systemFontOfSize:15.f];
+        _selectStateColor = [UIColor colorWithRed:0.13 green:0.13 blue:0.13 alpha:1.00];
+        _selectStateFont = [UIFont systemFontOfSize:16.f];
         
         [self addSubview:self.contentView];
         [self.contentView addSubview:self.indicator];
         [self addSubview:self.topLine];
         [self addSubview:self.bottomLine];
         
+        self.indicator.size = _indicatorSize;
+        
         // 添加 button
         UIButton *lastButton;
         for (int i=0; i<titles.count; i++) {
             UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
             [button setTitle:titles[i] forState:UIControlStateNormal];
-            [button setTitleColor:[UIColor colorWithRed:34/255.0 green:34/255.0 blue:34/255.0 alpha:1] forState:UIControlStateNormal];
-            button.titleLabel.font = [UIFont systemFontOfSize:15];
-            [button setTitleColor:[UIColor colorWithRed:248/255.0 green:89/255.0 blue:89/255.0 alpha:1] forState:UIControlStateSelected];
+            [button setTitleColor:_normalStateColor forState:UIControlStateNormal];
+            button.titleLabel.font = _normalStateFont;
+            [button setTitleColor:_selectStateColor forState:UIControlStateSelected];
             button.tag = kTitleBarTagStartValue + i;
             [button sizeToFit];
             
@@ -128,9 +139,13 @@
 
 - (void)setSelectedButton:(UIButton *)selectedButton
 {
-    if (_selectedButton == selectedButton) {
+    if (_selectedButton == selectedButton)
+    {
         return;
     }
+    
+    _selectedButton.titleLabel.font = _normalStateFont;
+    selectedButton.titleLabel.font = _selectStateFont;
     
     _selectedButton.selected = NO;
     _selectedButton = selectedButton;
@@ -138,11 +153,16 @@
     
     // 是否自己更新滚动条位置
     if (_automicAdjustIndicator) {
-        [UIView animateWithDuration:0.3 animations:^{
-            _indicator.width = selectedButton.titleLabel.width;
+        [UIView animateWithDuration:0.2 animations:^{
+            if (_autoResizeIndicator)
+            {
+                _indicatorSize.width = selectedButton.titleLabel.width;
+                _indicator.width = _indicatorSize.width;
+            }
             _indicator.centerX = selectedButton.centerX;
         }];
     }
+    
     
     // button 显示在中间
     CGPoint targetPoint = CGPointZero;
@@ -191,7 +211,6 @@
 {
     if (!_indicator) {
         _indicator = [UIImageView new];
-        _indicator.backgroundColor = [UIColor colorWithRed:248/255.0 green:89/255.0 blue:89/255.0 alpha:1/1.0];
         _indicator.tag = 9472;
     }
     return _indicator;
@@ -205,49 +224,57 @@
 - (void)layoutSubviews
 {
     [super layoutSubviews];
+    [self resetTitleBar];
+}
+
+
+- (void)resetTitleBar
+{
+    ///
+    _contentView.frame = self.bounds;
     
+    /// btn
+    CGFloat width = self.contentView.width / self.titles.count;
+    UIButton *lastButton = nil;
+    for (int i=0; i<self.titles.count; i++) {
+        UIButton *btn = [self.contentView viewWithTag:kTitleBarTagStartValue+i];
+        [btn setTitleColor:_normalStateColor forState:UIControlStateNormal];
+        [btn setTitleColor:_selectStateColor forState:UIControlStateSelected];
+        btn.titleLabel.font = _normalStateFont;
+        btn.width = width;
+        btn.height = self.contentView.height;
+        btn.y = 0;
+        btn.x = lastButton ? CGRectGetMaxX(lastButton.frame) : 0;
+        lastButton = btn;
+    }
+    _selectedButton.titleLabel.font = _selectStateFont;
+    
+    /// 顶部线条
     _topLine.y = 0;
     _topLine.width = self.width;
     _topLine.height = 0.3;
     _topLine.x = 0;
     
+    /// 底部线条
     _bottomLine.height = 0.3;
     _bottomLine.width = self.width;
     _bottomLine.x = 0;
     _bottomLine.y = self.height - _bottomLine.height;
     
-    _indicator.height = 2;
-    _indicator.width = 30;
+    /// indicator
+    _indicator.height = _indicatorSize.height;
+    _indicator.width = _indicatorSize.width;
     _indicator.y = self.height - _indicator.height;
     _indicator.centerX = _selectedButton.centerX;
-    
-    _contentView.frame = self.bounds;
-    UIButton *lastButton  = [self.contentView viewWithTag:kTitleBarTagStartValue+self.titles.count-1];
-    
-    if (CGRectGetMaxX(lastButton.frame) <= _contentView.width) {
-        
-        CGFloat width = self.contentView.width / self.titles.count;
-        UIButton *lastButton;
-        for (int i=0; i<self.titles.count; i++) {
-            UIButton *btn = [self.contentView viewWithTag:kTitleBarTagStartValue+i];
-            btn.width = width;
-            btn.height = self.contentView.height;
-            btn.y = 0;
-            btn.x = lastButton ? CGRectGetMaxX(lastButton.frame) : 0;
-            
-            lastButton = btn;
-        }
-        
-        _indicator.height = 2;
-        _indicator.width = 30;
-        _indicator.y = self.height - _indicator.height;
+    _indicator.backgroundColor = _indicatorColor;
         _indicator.centerX = _selectedButton.centerX;
         
-    } else {
+    ///
+    if (CGRectGetMaxX(lastButton.frame) > _contentView.width)
+    {
         _contentView.contentSize = CGSizeMake(CGRectGetMaxX(lastButton.frame), self.height);
     }
     
-//    NSLog(@"%@",_contentView);
 }
 
 @end

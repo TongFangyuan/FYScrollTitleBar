@@ -51,12 +51,31 @@
 @property (nonatomic, assign, readonly) NSInteger selectedIndex;
 /// 代理
 @property (nonatomic, weak) id<FYScrollTitleBarDelegate> delegate;
-/// 自己更新 Indicator 位置, 默认为NO
-@property (nonatomic, assign) BOOL automicAdjustIndicator;
+
 
 /// 滚动条更新
 - (void)updatePercentX:(CGFloat)precentX;
 /// 更新选中的 button
 - (void)setSelectedButtonAtIndex:(NSInteger)index;
+
+/******************************   UI配置   ******************************/
+
+/// 自己更新滚动条位置， 默认为NO
+@property (nonatomic, assign) BOOL automicAdjustIndicator;
+/// 是否自适应滚动条长度，默认NO
+@property (nonatomic, assign) BOOL autoResizeIndicator;
+/// 滚动条初始大小，默认 18x1
+@property (nonatomic, assign) CGSize indicatorSize;
+/// 滚动条色值 默认黑色
+@property (nonatomic, strong) UIColor *indicatorColor;
+/// 默认状态下title颜色
+@property (nonatomic, strong) UIColor *normalStateColor;
+/// 选中状态下title颜色
+@property (nonatomic, strong) UIColor *selectStateColor;
+/// 默认状态下字体
+@property (nonatomic, strong) UIFont  *normalStateFont;
+/// 选中状态下字体
+@property (nonatomic, strong) UIFont  *selectStateFont;
+
 
 @end
